@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  clonewriter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: clonewriter
+    ports:
+      - "3000:3000"
+      - "11434:11434"
+    volumes:
+      # Persist vector store and uploads
+      - ./vector_store:/app/vector_store
+      - ./data/uploads:/app/data/uploads
+      # Persist Ollama models (optional, saves re-downloading)
+      - ollama_models:/root/.ollama
+    environment:
+      - NODE_ENV=production
+      - OLLAMA_HOST=http://localhost:11434
+      - OLLAMA_MODEL=llama3.2:1b
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    # Resource limits (adjust based on your needs)
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+        reservations:
+          cpus: '2'
+          memory: 4G
+
+volumes:
+  ollama_models:
+    driver: local

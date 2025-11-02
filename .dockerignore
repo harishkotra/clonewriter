@@ -1,0 +1,58 @@
+# Dependencies
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Next.js
+.next
+out
+build
+
+# Testing
+coverage
+.nyc_output
+
+# Misc
+.DS_Store
+*.pem
+
+# Debug
+*.log
+
+# Local env files
+.env
+.env*.local
+.env.development
+.env.test
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Data (these will be mounted as volumes)
+vector_store/*
+data/uploads/*
+
+# Documentation
+README.md
+SETUP.md
+QUICKSTART.md
+SESSION_HISTORY_FEATURE.md
+PROJECT_SUMMARY.md
+
+# Scripts
+start-services.sh
