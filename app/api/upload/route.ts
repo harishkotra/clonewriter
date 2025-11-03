@@ -61,7 +61,11 @@ async function parseJSON(content: string): Promise<string[]> {
           item.tweet?.full_text ||
           item.tweet?.text ||
           item.post ||
-          item.body;
+          item.body ||
+          item.body_markdown ||
+          item.processed_html ||
+          item.comment ||
+          item.description;
         if (text && typeof text === "string") {
           texts.push(text);
         }
@@ -74,7 +78,10 @@ async function parseJSON(content: string): Promise<string[]> {
       data.content ||
       data.message ||
       data.tweet?.full_text ||
-      data.post;
+      data.post ||
+      data.body ||
+      data.body_markdown ||
+      data.processed_html;
     if (text && typeof text === "string") {
       texts.push(text);
     }
@@ -145,11 +152,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Add documents to vector store in batches
+    console.log(`Preparing to add ${allDocuments.length} documents to vector store`);
     const batchSize = 100;
     for (let i = 0; i < allDocuments.length; i += batchSize) {
       const batch = allDocuments.slice(i, i + batchSize);
+      console.log(`Adding batch ${Math.floor(i / batchSize) + 1}: ${batch.length} documents`);
       await addDocuments(batch);
     }
+
+    console.log(`Successfully added ${totalTexts} documents to vector store`);
 
     return NextResponse.json({
       success: true,

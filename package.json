@@ -21,6 +21,10 @@
     "react-dom": "18.3.1",
     "tailwind-merge": "2.5.4"
   },
+  "optionalDependencies": {
+    "mariadb": "^3.3.2",
+    "redis": "^4.7.0"
+  },
   "devDependencies": {
     "@types/node": "20.17.6",
     "@types/papaparse": "5.3.15",

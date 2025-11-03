@@ -15,6 +15,15 @@ const nextConfig = {
       });
     }
 
+    // Mark optional dependencies as external (they may not be installed)
+    if (isServer) {
+      config.externals = config.externals || [];
+      config.externals.push({
+        'redis': 'commonjs redis',
+        'mariadb': 'commonjs mariadb',
+      });
+    }
+
     return config;
   },
 };
