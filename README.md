@@ -6,6 +6,10 @@ Build a 100% private AI agent that generates content in your personal writing st
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript)
 ![Ollama](https://img.shields.io/badge/Ollama-Local%20LLM-green?style=for-the-badge)
 
+<img width="1751" height="2934" alt="screencapture-localhost-3000-2025-11-01-21_17_00" src="https://github.com/user-attachments/assets/6b786c40-4224-4a94-a68b-32d820aa9f64" />
+<img width="1751" height="3576" alt="screencapture-localhost-3000-2025-11-01-23_38_27" src="https://github.com/user-attachments/assets/63c568c2-b494-4d6d-b16c-6e76bcd7a847" />
+<img width="1751" height="3360" alt="screencapture-localhost-3000-2025-11-01-23_59_40" src="https://github.com/user-attachments/assets/74ccdc1b-b922-4a97-82ae-f0d83c71dcd8" />
+
 ## Features
 
 - **100% Private & Local**: All processing happens on your machine
