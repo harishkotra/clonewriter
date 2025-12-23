@@ -7,21 +7,30 @@ const nextConfig = {
       fs: false,
     };
 
+    // Normalize externals to object format for consistent handling
+    if (Array.isArray(config.externals)) {
+      // Convert array to object format
+      config.externals = config.externals.reduce((acc, ext) => {
+        if (typeof ext === 'string') {
+          acc[ext] = ext;
+        } else if (typeof ext === 'object' && ext !== null) {
+          Object.assign(acc, ext);
+        }
+        return acc;
+      }, {});
+    } else if (!config.externals || typeof config.externals !== 'object') {
+      config.externals = {};
+    }
+
     // Mark server-only packages as external for client bundle
     if (!isServer) {
-      config.externals = config.externals || [];
-      config.externals.push({
-        'ollama': 'ollama',
-      });
+      config.externals['ollama'] = 'ollama';
     }
 
     // Mark optional dependencies as external (they may not be installed)
     if (isServer) {
-      config.externals = config.externals || [];
-      config.externals.push({
-        'redis': 'commonjs redis',
-        'mariadb': 'commonjs mariadb',
-      });
+      config.externals['redis'] = 'commonjs redis';
+      config.externals['mariadb'] = 'commonjs mariadb';
     }
 
     return config;

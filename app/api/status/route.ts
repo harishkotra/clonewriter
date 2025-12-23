@@ -22,8 +22,8 @@ export async function GET() {
       const storeInfo = await getVectorStoreInfo();
       const storeType = VectorStoreFactory.getConfiguredType();
       
-      // Try to get the store instance and check health
-      const store = VectorStoreFactory.create(storeType);
+      // Use getInstance() which properly initializes the store
+      const store = await VectorStoreFactory.getInstance(storeType);
       const isHealthy = await store.healthCheck();
       
       if (isHealthy) {

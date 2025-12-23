@@ -36,7 +36,7 @@ export class MariaDBVectorStore implements IVectorStore {
   };
 
   constructor(config?: VectorStoreConfig) {
-    this.collectionName = config?.collectionName || 'clonewriter';
+    this.collectionName = this.validateCollectionName(config?.collectionName || 'clonewriter');
     this.tableName = `${this.collectionName}_documents`;
     this.dimensions = 384;
 
@@ -47,6 +47,39 @@ export class MariaDBVectorStore implements IVectorStore {
       password: process.env.MARIADB_PASSWORD || '',
       database: process.env.MARIADB_DATABASE || 'clonewriter'
     };
+  }
+
+  /**
+   * Validate and sanitize collection name to prevent SQL injection
+   * Only allows alphanumeric characters, underscores, and hyphens
+   */
+  private validateCollectionName(name: string): string {
+    // Remove any characters that aren't alphanumeric, underscore, or hyphen
+    const sanitized = name.replace(/[^a-zA-Z0-9_-]/g, '');
+    
+    if (sanitized.length === 0) {
+      throw new Error('Collection name must contain at least one alphanumeric character');
+    }
+    
+    if (sanitized.length > 64) {
+      throw new Error('Collection name must be 64 characters or less');
+    }
+    
+    // Ensure it doesn't start with a number (MySQL/MariaDB identifier restriction)
+    if (/^\d/.test(sanitized)) {
+      throw new Error('Collection name cannot start with a number');
+    }
+    
+    return sanitized;
+  }
+
+  /**
+   * Safely quote table name for SQL queries
+   * Uses backticks for MariaDB/MySQL identifier quoting
+   */
+  private quoteIdentifier(identifier: string): string {
+    // Replace backticks with double backticks to escape them
+    return `\`${identifier.replace(/`/g, '``')}\``;
   }
 
   async init(): Promise<void> {
@@ -103,8 +136,9 @@ export class MariaDBVectorStore implements IVectorStore {
 
   async getOrCreateCollection(): Promise<{ name: string; count?: number }> {
     try {
+      const quotedTableName = this.quoteIdentifier(this.tableName);
       const result = await this.connection.query(
-        `SELECT COUNT(*) as count FROM ${this.tableName}`
+        `SELECT COUNT(*) as count FROM ${quotedTableName}`
       );
 
       return {
@@ -124,12 +158,13 @@ export class MariaDBVectorStore implements IVectorStore {
     }
 
     try {
+      const quotedTableName = this.quoteIdentifier(this.tableName);
       for (const doc of docs) {
         const embedding = simpleTextEmbedding(doc.text, this.dimensions);
         const vectorString = `[${embedding.join(',')}]`;
 
         await this.connection.query(
-          `INSERT INTO ${this.tableName} (id, text, metadata, vector) VALUES (?, ?, ?, ?)`,
+          `INSERT INTO ${quotedTableName} (id, text, metadata, vector) VALUES (?, ?, ?, ?)`,
           [
             doc.id,
             doc.text,
@@ -157,13 +192,14 @@ export class MariaDBVectorStore implements IVectorStore {
 
       // Use cosine similarity for vector search
       // Note: MariaDB 11.6+ supports VEC_DISTANCE_COSINE
+      const quotedTableName = this.quoteIdentifier(this.tableName);
       const results = await this.connection.query(
         `SELECT
           id,
           text,
           metadata,
           VEC_DISTANCE_COSINE(vector, ?) as distance
-        FROM ${this.tableName}
+        FROM ${quotedTableName}
         ORDER BY distance ASC
         LIMIT ?`,
         [vectorString, nResults]
@@ -196,7 +232,8 @@ export class MariaDBVectorStore implements IVectorStore {
     }
 
     try {
-      await this.connection.query(`DELETE FROM ${this.tableName}`);
+      const quotedTableName = this.quoteIdentifier(this.tableName);
+      await this.connection.query(`DELETE FROM ${quotedTableName}`);
       console.log('MariaDB collection cleared');
     } catch (error) {
       console.error('Error clearing MariaDB collection:', error);
@@ -216,9 +253,10 @@ export class MariaDBVectorStore implements IVectorStore {
       // For older versions, we'll use JSON to store vectors
       const hasVectorSupport = this.checkVectorSupport(version);
 
+      const quotedTableName = this.quoteIdentifier(this.tableName);
       if (hasVectorSupport) {
         await this.connection.query(`
-          CREATE TABLE IF NOT EXISTS ${this.tableName} (
+          CREATE TABLE IF NOT EXISTS ${quotedTableName} (
             id VARCHAR(255) PRIMARY KEY,
             text TEXT NOT NULL,
             metadata JSON,
@@ -230,7 +268,7 @@ export class MariaDBVectorStore implements IVectorStore {
       } else {
         // Fallback for older MariaDB versions
         await this.connection.query(`
-          CREATE TABLE IF NOT EXISTS ${this.tableName} (
+          CREATE TABLE IF NOT EXISTS ${quotedTableName} (
             id VARCHAR(255) PRIMARY KEY,
             text TEXT NOT NULL,
             metadata JSON,
@@ -265,9 +303,10 @@ export class MariaDBVectorStore implements IVectorStore {
     // Build LIKE conditions for keyword matching
     const likeConditions = queryWords.map(() => 'LOWER(text) LIKE ?').join(' OR ');
     const params = queryWords.map(word => `%${word}%`);
+    const quotedTableName = this.quoteIdentifier(this.tableName);
 
     const results = await this.connection.query(
-      `SELECT id, text, metadata FROM ${this.tableName} WHERE ${likeConditions} LIMIT ?`,
+      `SELECT id, text, metadata FROM ${quotedTableName} WHERE ${likeConditions} LIMIT ?`,
       [...params, nResults]
     );
 

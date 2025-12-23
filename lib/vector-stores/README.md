@@ -219,3 +219,28 @@ To add a new vector store:
 3. Add the type to `VectorStoreType` in `factory.ts`
 4. Add a case in the factory's `create()` method
 5. Update this README with configuration details
+
+### Using Vector Stores in Code
+
+**Important**: When using vector stores in your code, always use `VectorStoreFactory.getInstance()` instead of `create()`:
+
+```typescript
+import { VectorStoreFactory } from '@/lib/vector-stores/factory';
+
+// ✅ CORRECT: getInstance() initializes the store
+const store = await VectorStoreFactory.getInstance();
+await store.addDocuments(docs);
+
+// ❌ WRONG: create() doesn't initialize the store
+// This will fail for stores that need initialization (Redis, MariaDB)
+const store = VectorStoreFactory.create();
+await store.addDocuments(docs); // May fail if init() wasn't called
+```
+
+The `getInstance()` method:
+- Creates the store instance
+- Calls `init()` to establish connections
+- Performs health checks
+- Falls back to file-based store if initialization fails
+
+For most use cases, use the helper functions from `@/lib/vector-store.server` which handle this automatically.

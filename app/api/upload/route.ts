@@ -1,48 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
-import Papa from "papaparse";
 import { addDocuments, clearCollection, type Document } from "@/lib/vector-store.server";
+import { parseCSV } from "@/lib/csv-parser";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-async function parseCSV(content: string): Promise<string[]> {
-  return new Promise((resolve, reject) => {
-    Papa.parse(content, {
-      header: true,
-      complete: (results) => {
-        const texts: string[] = [];
-        results.data.forEach((row: any) => {
-          // Priority order for text fields (case-insensitive)
-          const text =
-            row.Text ||
-            row.text ||
-            row.Content ||
-            row.content ||
-            row.Message ||
-            row.message ||
-            row.Tweet ||
-            row.tweet ||
-            row.Post ||
-            row.post ||
-            row.full_text ||
-            row.Summary ||
-            row.summary ||
-            row.Description ||
-            row.description;
-
-          // Only include text that's substantial (> 50 characters to avoid job titles, names, etc.)
-          if (text && typeof text === "string" && text.length > 50) {
-            texts.push(text.trim());
-          }
-        });
-        resolve(texts);
-      },
-      error: (error: any) => reject(error),
-    });
-  });
-}
+// CSV parsing is now handled by lib/csv-parser.ts
+// The parseCSV function is imported from there
 
 async function parseJSON(content: string): Promise<string[]> {
   const data = JSON.parse(content);
